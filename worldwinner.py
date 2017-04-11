@@ -29,12 +29,12 @@ repeatableMode=False
 
 class Chromosome:
     def __init__(self):
-        self.enemyScore = random.randint(0, 1000)
-        self.friendScore = random.randint(-500, 500)
-        self.goToFoodScore = random.randint(0, 1000)
-        self.awayFromFoodScore = random.randint(0, 1000)
-        self.eatScore = random.randint(0, 1000)
-        self.randomScore = random.randint(0, 1000)
+        self.enemyScore = random.randint(0, 100)
+        self.friendScore = random.randint(-50, 50)
+        self.goToFoodScore = random.randint(0, 100)
+        self.awayFromFoodScore = random.randint(0, 100)
+        self.eatScore = random.randint(0, 100)
+        self.randomScore = random.randint(0, 100)
 
 # This is a class implementing you creature a.k.a MyCreature.  It extends the basic Creature, which provides the
 # basic functionality of the creature for the world simulation.  Your job is to implement the AgentFunction
