@@ -86,11 +86,11 @@ class MyCreature(Creature):
         for i in range(18, 27):
             if percepts[i] != 0:
                 if i == 22:
-                    actions[9] += self.chromosome.eatScore * (100 - self.getEnergy())
+                    actions[9] += self.chromosome.eatScore * (100 - self.getEnergy()) * percepts[i]
                 for j in range(0, 9):
-                    actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore
+                    actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore * percepts[i]
                     if Distance(j % 3, j / 3, i % 3, (i - 18) / 3) == 0:
-                        actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy())
+                        actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy()) * percepts[i]
 
         
         return actions
