@@ -36,6 +36,14 @@ class Chromosome:
         self.eatScore = random.randint(0, 100)
         self.randomScore = random.randint(0, 100)
 
+    def printAll(self):
+        print("     Enemy Score    : %d" % self.enemyScore)
+        print("    Friend Score    : %d" % self.friendScore)
+        print("   Go To Food Score : %d" % self.goToFoodScore)
+        print("Away From Food Score: %d" % self.awayFromFoodScore)
+        print("     Eat Score      : %d" % self.eatScore)
+        print("     Random Score   : %d" % self.randomScore)
+
 # This is a class implementing you creature a.k.a MyCreature.  It extends the basic Creature, which provides the
 # basic functionality of the creature for the world simulation.  Your job is to implement the AgentFunction
 # that controls creature's behavoiur by producing actions in respons to percepts.
@@ -86,11 +94,11 @@ class MyCreature(Creature):
         for i in range(18, 27):
             if percepts[i] != 0:
                 if i == 22:
-                    actions[9] += self.chromosome.eatScore * (100 - self.getEnergy()) * percepts[i]
+                    actions[9] += self.chromosome.eatScore * (100 - self.getEnergy())
                 for j in range(0, 9):
-                    actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore * percepts[i]
+                    actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore
                     if Distance(j % 3, j / 3, i % 3, (i - 18) / 3) == 0:
-                        actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy()) * percepts[i]
+                        actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy())
 
         
         return actions
@@ -99,7 +107,7 @@ def Distance(a1, a2, b1, b2):
     return (a1 - b1) + (a2 - b2)
 
 def mateTwoParents(a, b):
-    mutationChance = 0
+    mutationChance = 0.01
     c = MyCreature(a.numP, a.numA)
     c.chromosome = a.chromosome
     if random.uniform(0,1) <= 0.5:
@@ -128,19 +136,46 @@ def mateTwoParents(a, b):
         c.chromosome.randomScore = random.randint(0, 100)
     return c
 
+def newPopTwo(oldPopulation, totalFitness):
+    newPopulation = []
+    oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
+    i = 0
+    # Keep the survivors from last time
+    while(oldPopulation[i].fitness >= 200):
+        c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
+        c.chromosome = oldPopulation[i].chromosome
+        newPopulation.append(c)
+        i+=1
+    for i in range(len(newPopulation), len(oldPopulation)):
+        randA = random.randint(0, totalFitness)
+        randB = random.randint(0, totalFitness)
+        A = None
+        B = None
+        currTotal = 0
+        for i in range(0, len(oldPopulation)):
+            currTotal += oldPopulation[i].fitness
+            if currTotal >= randA:
+                A = oldPopulation[i]
+            if currTotal >= randB:
+                B = oldPopulation[i]
+            if A and B:
+                newPopulation.append(mateTwoParents(A, B))
+                break
+    return newPopulation
+
 def createNewPopulationFromOld(oldPopulation):
     newPopulation = []
-    # oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
-    # i = 0
+    oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
+    i = 0
     # Keep the survivors from last time
-    # while(oldPopulation[i].fitness >= 200):
-    #     c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
-    #     c.chromosome = oldPopulation[i].chromosome
-    #     newPopulation.append(c)
-    #     i+=1
+    while(oldPopulation[i].fitness >= 200):
+        c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
+        c.chromosome = oldPopulation[i].chromosome
+        newPopulation.append(c)
+        i+=1
     for i in range(len(newPopulation), len(oldPopulation)):
-        # Randomly choose 50% of the old population
-        randomPopulation = random.sample(oldPopulation, 2 * int(len(oldPopulation) / 4))
+        # Randomly choose 75% of the old population
+        randomPopulation = random.sample(oldPopulation, 3 * int(len(oldPopulation) / 4))
         randomPopulation.sort(key=lambda x: x.fitness, reverse=True)
         newPopulation.append(mateTwoParents(randomPopulation[0], randomPopulation[1]))
     return newPopulation
@@ -207,6 +242,7 @@ def newPopulation(old_population):
     # creating new creatures.
 
     return createNewPopulationFromOld(old_population)
+    #return newPopTwo(old_population, int(sum(fitnessScoreList)))
 
 # Create the world.  Representaiton type choses the type of percept representation (there are three types to chose from);
 # gridSize specifies the size of the world, repeatable parameter allows you to run the simulation in exactly same way.
