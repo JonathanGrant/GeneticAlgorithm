@@ -96,7 +96,7 @@ class MyCreature(Creature):
                 if i == 22:
                     actions[9] += self.chromosome.eatScore * (100 - self.getEnergy())
                 for j in range(0, 9):
-                    actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore
+                    # actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore
                     if Distance(j % 3, j / 3, i % 3, (i - 18) / 3) == 0:
                         actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy())
 
@@ -104,7 +104,7 @@ class MyCreature(Creature):
         return actions
 
 def Distance(a1, a2, b1, b2):
-    return (a1 - b1) + (a2 - b2)
+    return (a1 - b1) * (a1 - b1) + (a2 - b2) * (a2 - b2)
 
 def mateTwoParents(a, b):
     mutationChance = 0.01
