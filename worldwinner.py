@@ -4,11 +4,14 @@ import numpy as np
 import time
 import random
 import matplotlib.pyplot as plt
+import math
 
 # To keep track for the plot
 avgFitnessOverTime = []
 avgTurnsOverTime = []
 numWinnersOverTime = []
+lastPopulation = []
+oldAvgFitness = 0
 
 # You can change this number to specify how many generations creatures are going to evolve over...
 numGenerations = 500
@@ -29,12 +32,13 @@ repeatableMode=False
 
 class Chromosome:
     def __init__(self):
-        self.enemyScore = random.randint(0, 100)
+        self.enemyScore = random.randint(-100, 100)
         self.friendScore = random.randint(-50, 50)
-        self.goToFoodScore = random.randint(0, 100)
-        self.awayFromFoodScore = random.randint(0, 100)
-        self.eatScore = random.randint(0, 100)
-        self.randomScore = random.randint(0, 100)
+        self.goToFoodScore = random.randint(-100, 100)
+        self.awayFromFoodScore = random.randint(-100, 100)
+        self.eatScore = random.randint(-100, 100)
+        self.randomScore = random.randint(-100, 100)
+        self.doAnything = random.randint(0,1) == 0
 
     def printAll(self):
         print("     Enemy Score    : %d" % self.enemyScore)
@@ -76,6 +80,9 @@ class MyCreature(Creature):
     #        numAction - the size of the actions list that needs to be returned
     def AgentFunction(self, percepts, numActions):
         actions = [0] * numActions
+        if not self.chromosome.doAnything:
+            return actions
+
         actions[10] = self.chromosome.randomScore
 
         # The farther I am from an enemy, the better
@@ -103,11 +110,16 @@ class MyCreature(Creature):
         
         return actions
 
+def checkAndSwapGenerations(newGen, avgFitness, oldPopulation, oldAvgFitness):
+    if oldPopulation and oldAvgFitness > avgFitness:
+        return oldPopulation, oldAvgFitness
+    return newGen, avgFitness
+
 def Distance(a1, a2, b1, b2):
-    return (a1 - b1) * (a1 - b1) + (a2 - b2) * (a2 - b2)
+    return math.sqrt((a1 - b1) * (a1 - b1) + (a2 - b2) * (a2 - b2))
 
 def mateTwoParents(a, b):
-    mutationChance = 0.01
+    mutationChance = 0.0001
     c = MyCreature(a.numP, a.numA)
     c.chromosome = a.chromosome
     if random.uniform(0,1) <= 0.5:
@@ -117,7 +129,7 @@ def mateTwoParents(a, b):
     if random.uniform(0,1) <= 0.5:
         c.chromosome.friendScore = b.chromosome.friendScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.friendScore = random.randint(0, 100)
+        c.chromosome.friendScore = random.randint(-50, 50)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.goToFoodScore = b.chromosome.goToFoodScore
     if random.uniform(0,1) <= mutationChance:
@@ -134,21 +146,26 @@ def mateTwoParents(a, b):
         c.chromosome.randomScore = b.chromosome.randomScore
     if random.uniform(0,1) <= mutationChance:
         c.chromosome.randomScore = random.randint(0, 100)
+    if random.uniform(0,1) <= 0.5:
+        c.chromosome.doAnything = b.chromosome.doAnything
+    if random.uniform(0,1) <= mutationChance:
+        c.chromosome.doAnything = random.randint(0, 1) == 0
     return c
 
-def newPopTwo(oldPopulation, totalFitness):
+def rouletteWheelSelection(oldPopulation):
     newPopulation = []
-    oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
-    i = 0
+    totalFitness = 0
     # Keep the survivors from last time
-    while(oldPopulation[i].fitness >= 200):
-        c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
-        c.chromosome = oldPopulation[i].chromosome
-        newPopulation.append(c)
-        i+=1
+    oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
+    for i in range(0, len(oldPopulation)):
+        if oldPopulation[i].fitness >= 300:
+            c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
+            c.chromosome = oldPopulation[i].chromosome
+            newPopulation.append(c)
+        totalFitness += oldPopulation[i].fitness
     for i in range(len(newPopulation), len(oldPopulation)):
-        randA = random.randint(0, totalFitness)
-        randB = random.randint(0, totalFitness)
+        randA = random.randint(0, int(totalFitness))
+        randB = random.randint(0, int(totalFitness))
         A = None
         B = None
         currTotal = 0
@@ -163,19 +180,19 @@ def newPopTwo(oldPopulation, totalFitness):
                 break
     return newPopulation
 
-def createNewPopulationFromOld(oldPopulation):
+def tournamentSelection(oldPopulation):
     newPopulation = []
+    # Keep the survivors from last time
     oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
     i = 0
-    # Keep the survivors from last time
-    while(oldPopulation[i].fitness >= 200):
+    while(oldPopulation[i].fitness >= 300):
         c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
         c.chromosome = oldPopulation[i].chromosome
         newPopulation.append(c)
         i+=1
     for i in range(len(newPopulation), len(oldPopulation)):
         # Randomly choose 75% of the old population
-        randomPopulation = random.sample(oldPopulation, 3 * int(len(oldPopulation) / 4))
+        randomPopulation = random.sample(oldPopulation, int(len(oldPopulation) / 2))
         randomPopulation.sort(key=lambda x: x.fitness, reverse=True)
         newPopulation.append(mateTwoParents(randomPopulation[0], randomPopulation[1]))
     return newPopulation
@@ -192,7 +209,7 @@ def createNewPopulationFromOld(oldPopulation):
 #
 # Returns: a list of MyCreature objects of the same length as the old_population.
 def newPopulation(old_population):
-    global numTurns
+    global numTurns, oldAvgFitness, lastPopulation
 
     nSurvivors = 0
     avgLifeTime = 0
@@ -205,7 +222,7 @@ def newPopulation(old_population):
     # of creature's death (if dead).  You should use this information to build
     # a fitness function, score for how the individual did
     for individual in old_population:
-        fitnessScore = 200
+        fitnessScore = 300
         # You can read the creature's energy at the end of the simulation.  It will be 0 if creature is dead
         energy = individual.getEnergy()
 
@@ -232,6 +249,7 @@ def newPopulation(old_population):
     print("  Survivors    : %d out of %d" % (nSurvivors, len(population)))
     print("  Avg life time: %.1f turns" % avgLifeTime)
     print("  Avg fitness  : %.1f points" % avgFitness)
+    print("oldAvg fitness : %.1f points" % oldAvgFitness)
 
     avgFitnessOverTime.append(avgFitness)
     avgTurnsOverTime.append(avgLifeTime)
@@ -241,8 +259,11 @@ def newPopulation(old_population):
     # every creature.  You should show the average fitness, but also use the fitness for selecting parents and
     # creating new creatures.
 
-    return createNewPopulationFromOld(old_population)
-    #return newPopTwo(old_population, int(sum(fitnessScoreList)))
+    # Here we decide if we want to make babies of the newer gen, or the older and (maybe) better gen
+    lastPopulation, oldAvgFitness = checkAndSwapGenerations(old_population, avgFitness, lastPopulation, oldAvgFitness)
+
+    # return tournamentSelection(lastPopulation)
+    return rouletteWheelSelection(lastPopulation)
 
 # Create the world.  Representaiton type choses the type of percept representation (there are three types to chose from);
 # gridSize specifies the size of the world, repeatable parameter allows you to run the simulation in exactly same way.
@@ -270,7 +291,7 @@ w.setNextGeneration(population)
 w.evaluate(numTurns)
 
 # Show visualisation of initial creature behaviour
-w.show_simulation(titleStr='Initial population', speed='fast')
+# w.show_simulation(titleStr='Initial population', speed='fast')
 
 for i in range(numGenerations):
     print("\nGeneration %d:" % (i+1))
@@ -285,8 +306,9 @@ for i in range(numGenerations):
     w.evaluate(numTurns)
 
     # Show visualisation of final generation
-    if i==numGenerations-1:
-        w.show_simulation(titleStr='Final population', speed='fast')
+    # if i==numGenerations-1:
+        # w.show_simulation(titleStr='Final population', speed='fast')
+
 
 plt.plot(avgFitnessOverTime)
 plt.show()
