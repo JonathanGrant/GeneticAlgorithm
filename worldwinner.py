@@ -98,17 +98,17 @@ class MyCreature(Creature):
         for i in range(18, 27):
             if percepts[i] != 0:
                 if i == 22:
-                    actions[9] += self.chromosome.eatScore * (100 - self.getEnergy())
+                    actions[9] += self.chromosome.eatScore * (100 - self.getEnergy()) * percepts[i]
                 for j in range(0, 9):
-                    # actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore
+                    actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore * percepts[i]
                     if Distance(j % 3, j / 3, i % 3, (i - 18) / 3) == 0:
-                        actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy())
+                        actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy()) * percepts[i]
 
         
         return actions
 
 def checkAndSwapGenerations(newGen, avgFitness, oldPopulation, oldAvgFitness, numGenerationsSinceSwitch):
-    if oldPopulation and oldAvgFitness > avgFitness and (numGenerationsSinceSwitch <= 50 or avgFitness * 4 / 3 < oldAvgFitness):
+    if oldPopulation and oldAvgFitness > avgFitness and (numGenerationsSinceSwitch <= 10 or avgFitness * 4 / 3 < oldAvgFitness):
         return oldPopulation, oldAvgFitness, numGenerationsSinceSwitch + 1
     return newGen, avgFitness, 0
 
@@ -116,8 +116,10 @@ def Distance(a1, a2, b1, b2):
     return math.sqrt((a1 - b1) * (a1 - b1) + (a2 - b2) * (a2 - b2))
 
 def mateTwoParents(a, b):
-    mutationChance = 0#.001
     c = MyCreature(a.numP, a.numA)
+    if random.uniform(0, 1) <= 0.0001:
+        return c
+    mutationChance = 0#.001
     c.chromosome = a.chromosome
     if random.uniform(0,1) <= 0.5:
         c.chromosome.enemyScore = b.chromosome.enemyScore
