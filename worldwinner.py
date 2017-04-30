@@ -34,10 +34,12 @@ repeatableMode=False
 class Chromosome:
     def __init__(self):
         self.enemyScore = random.randint(-100, 100)
+        self.eatEnemyScore = random.randint(-100, 100)
         self.friendScore = random.randint(-50, 50)
+        self.eatFriendScore = random.randint(-100, 100)
         self.goToFoodScore = random.randint(-100, 100)
         self.awayFromFoodScore = random.randint(-100, 100)
-        self.eatScore = random.randint(-100, 100)
+        self.eatFoodScore = random.randint(-100, 100)
         self.randomScore = random.randint(-100, 100)
 
     def printAll(self):
@@ -45,7 +47,7 @@ class Chromosome:
         print("    Friend Score    : %d" % self.friendScore)
         print("   Go To Food Score : %d" % self.goToFoodScore)
         print("Away From Food Score: %d" % self.awayFromFoodScore)
-        print("     Eat Score      : %d" % self.eatScore)
+        print("     Eat Score      : %d" % self.eatFoodScore)
         print("     Random Score   : %d" % self.randomScore)
 
 # This is a class implementing you creature a.k.a MyCreature.  It extends the basic Creature, which provides the
@@ -85,20 +87,31 @@ class MyCreature(Creature):
         # The farther I am from an enemy, the better
         for i in range(0, 9):
             if percepts[i] != 0:
+                if i == 4:
+                    actions[9] += self.chromosome.eatEnemyScore * (100 - self.getEnergy())
                 for j in range(0, 9):
                     actions[j] += Distance(j % 3, j / 3, i % 3, i / 3) * self.chromosome.enemyScore
 
         # The farther I am from a friend, the better, because then we won't fight over food.
+<<<<<<< HEAD
         # for i in range(9, 18):
         #     if percepts[i] != 0:
         #         for j in range(0, 9):
         #             actions[j] += Distance(j % 3, j / 3, i % 3, (i - 9) / 3) * self.chromosome.friendScore
+=======
+        for i in range(9, 18):
+            if percepts[i] != 0:
+                if i == 13:
+                    actions[9] += self.chromosome.eatFriendScore * (100 - self.getEnergy())
+                for j in range(0, 9):
+                    actions[j] += Distance(j % 3, j / 3, i % 3, (i - 9) / 3) * self.chromosome.friendScore
+>>>>>>> 8b375c7590fe02fd2927b6e162f0dc54769d3886
 
         # The closer I am to food, the better, because then I can eat.
         for i in range(18, 27):
             if percepts[i] != 0:
                 if i == 22:
-                    actions[9] += self.chromosome.eatScore * (100 - self.getEnergy()) * percepts[i]
+                    actions[9] += self.chromosome.eatFoodScore * (100 - self.getEnergy()) * percepts[i]
                 for j in range(0, 9):
                     actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore * percepts[i]
                     if Distance(j % 3, j / 3, i % 3, (i - 18) / 3) == 0:
@@ -126,9 +139,17 @@ def mateTwoParents(a, b):
     if random.uniform(0,1) <= mutationChance:
         c.chromosome.enemyScore += random.randint(-10, 10)
     if random.uniform(0,1) <= 0.5:
+        c.chromosome.eatEnemyScore = b.chromosome.eatEnemyScore
+    if random.uniform(0,1) <= mutationChance:
+        c.chromosome.eatEnemyScore += random.randint(-10, 10)
+    if random.uniform(0,1) <= 0.5:
         c.chromosome.friendScore = b.chromosome.friendScore
     if random.uniform(0,1) <= mutationChance:
         c.chromosome.friendScore += random.randint(-5, 5)
+    if random.uniform(0,1) <= 0.5:
+        c.chromosome.eatFriendScore = b.chromosome.eatFriendScore
+    if random.uniform(0,1) <= mutationChance:
+        c.chromosome.eatFriendScore += random.randint(-5, 5)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.goToFoodScore = b.chromosome.goToFoodScore
     if random.uniform(0,1) <= mutationChance:
@@ -138,9 +159,9 @@ def mateTwoParents(a, b):
     if random.uniform(0,1) <= mutationChance:
         c.chromosome.awayFromFoodScore += random.randint(-10, 10)
     if random.uniform(0,1) <= 0.5:
-        c.chromosome.eatScore = b.chromosome.eatScore
+        c.chromosome.eatFoodScore = b.chromosome.eatFoodScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.eatScore += random.randint(-10, 10)
+        c.chromosome.eatFoodScore += random.randint(-10, 10)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.randomScore = b.chromosome.randomScore
     if random.uniform(0,1) <= mutationChance:
@@ -153,7 +174,7 @@ def rouletteWheelSelection(oldPopulation):
     # Keep the survivors from last time
     oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
     for i in range(0, len(oldPopulation)):
-        if oldPopulation[i].fitness >= 300:
+        if oldPopulation[i].fitness >= 1000:
             c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
             c.chromosome = oldPopulation[i].chromosome
             newPopulation.append(c)
@@ -180,7 +201,7 @@ def tournamentSelection(oldPopulation):
     # Keep the survivors from last time
     oldPopulation.sort(key=lambda x: x.fitness, reverse=True)
     i = 0
-    while(oldPopulation[i].fitness >= 300):
+    while(oldPopulation[i].fitness >= 1000):
         c = MyCreature(oldPopulation[i].numP, oldPopulation[i].numA)
         c.chromosome = oldPopulation[i].chromosome
         newPopulation.append(c)
@@ -217,7 +238,7 @@ def newPopulation(old_population):
     # of creature's death (if dead).  You should use this information to build
     # a fitness function, score for how the individual did
     for individual in old_population:
-        fitnessScore = 300
+        fitnessScore = 1000
         # You can read the creature's energy at the end of the simulation.  It will be 0 if creature is dead
         energy = individual.getEnergy()
 
