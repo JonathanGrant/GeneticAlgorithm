@@ -89,10 +89,10 @@ class MyCreature(Creature):
                     actions[j] += Distance(j % 3, j / 3, i % 3, i / 3) * self.chromosome.enemyScore
 
         # The farther I am from a friend, the better, because then we won't fight over food.
-        for i in range(9, 18):
-            if percepts[i] != 0:
-                for j in range(0, 9):
-                    actions[j] += Distance(j % 3, j / 3, i % 3, (i - 9) / 3) * self.chromosome.friendScore
+        # for i in range(9, 18):
+        #     if percepts[i] != 0:
+        #         for j in range(0, 9):
+        #             actions[j] += Distance(j % 3, j / 3, i % 3, (i - 9) / 3) * self.chromosome.friendScore
 
         # The closer I am to food, the better, because then I can eat.
         for i in range(18, 27):
