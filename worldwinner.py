@@ -93,10 +93,10 @@ class MyCreature(Creature):
                     actions[j] += Distance(j % 3, j / 3, i % 3, i / 3) * self.chromosome.enemyScore
 
         # The farther I am from a friend, the better, because then we won't fight over food.
-        # for i in range(9, 18):
-        #     if percepts[i] != 0:
-        #         for j in range(0, 9):
-        #             actions[j] += Distance(j % 3, j / 3, i % 3, (i - 9) / 3) * self.chromosome.friendScore
+        for i in range(9, 18):
+            if percepts[i] != 0:
+                for j in range(0, 9):
+                    actions[j] += Distance(j % 3, j / 3, i % 3, (i - 9) / 3) * self.chromosome.friendScore
 
         # The closer I am to food, the better, because then I can eat.
         for i in range(18, 27):
@@ -112,7 +112,7 @@ class MyCreature(Creature):
         return actions
 
 def checkAndSwapGenerations(newGen, avgFitness, oldPopulation, oldAvgFitness, numGenerationsSinceSwitch):
-    if oldPopulation and oldAvgFitness > avgFitness and (numGenerationsSinceSwitch <= 10 or avgFitness * 4 / 3 < oldAvgFitness):
+    if oldPopulation and oldAvgFitness > avgFitness and (numGenerationsSinceSwitch <= 5 or avgFitness * 4 / 3 < oldAvgFitness):
         return oldPopulation, oldAvgFitness, numGenerationsSinceSwitch + 1
     return newGen, avgFitness, 0
 
@@ -121,18 +121,16 @@ def Distance(a1, a2, b1, b2):
 
 def mateTwoParents(a, b):
     c = MyCreature(a.numP, a.numA)
-    if random.uniform(0, 1) <= 0.0001:
-        return c
-    mutationChance = 0#.001
+    mutationChance = 0.001
     c.chromosome = a.chromosome
     if random.uniform(0,1) <= 0.5:
         c.chromosome.enemyScore = b.chromosome.enemyScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.enemyScore += random.randint(-10, 10)
+        c.chromosome.enemyScore = random.randint(0, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.eatEnemyScore = b.chromosome.eatEnemyScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.eatEnemyScore += random.randint(-10, 10)
+        c.chromosome.eatEnemyScore = random.randint(0, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.friendScore = b.chromosome.friendScore
     if random.uniform(0,1) <= mutationChance:
@@ -144,19 +142,19 @@ def mateTwoParents(a, b):
     if random.uniform(0,1) <= 0.5:
         c.chromosome.goToFoodScore = b.chromosome.goToFoodScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.goToFoodScore += random.randint(-10, 10)
+        c.chromosome.goToFoodScore = random.randint(0, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.awayFromFoodScore = b.chromosome.awayFromFoodScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.awayFromFoodScore += random.randint(-10, 10)
+        c.chromosome.awayFromFoodScore = random.randint(0, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.eatFoodScore = b.chromosome.eatFoodScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.eatFoodScore += random.randint(-10, 10)
+        c.chromosome.eatFoodScore = random.randint(0, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.randomScore = b.chromosome.randomScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.randomScore += random.randint(-10, 10)
+        c.chromosome.randomScore = random.randint(0, 100)
     return c
 
 def rouletteWheelSelection(oldPopulation):
@@ -269,8 +267,8 @@ def newPopulation(old_population):
     # Here we decide if we want to make babies of the newer gen, or the older and (maybe) better gen
     lastPopulation, oldAvgFitness, numGenerationsSinceSwitch = checkAndSwapGenerations(old_population, avgFitness, lastPopulation, oldAvgFitness, numGenerationsSinceSwitch)
 
-    # return tournamentSelection(lastPopulation)
-    return rouletteWheelSelection(lastPopulation)
+    return tournamentSelection(lastPopulation)
+    # return rouletteWheelSelection(lastPopulation)
 
 # Create the world.  Representaiton type choses the type of percept representation (there are three types to chose from);
 # gridSize specifies the size of the world, repeatable parameter allows you to run the simulation in exactly same way.
