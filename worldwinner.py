@@ -35,7 +35,7 @@ class Chromosome:
     def __init__(self):
         self.enemyScore = random.randint(-100, 100)
         self.eatEnemyScore = random.randint(-100, 100)
-        self.friendScore = random.randint(-50, 50)
+        self.friendScore = random.randint(-100, 100)
         self.eatFriendScore = random.randint(-100, 100)
         self.goToFoodScore = random.randint(-100, 100)
         self.awayFromFoodScore = random.randint(-100, 100)
@@ -95,6 +95,8 @@ class MyCreature(Creature):
         # The farther I am from a friend, the better, because then we won't fight over food.
         for i in range(9, 18):
             if percepts[i] != 0:
+                if i == 13:
+                    actions[9] += self.chromosome.eatFriendScore * (100 - self.getEnergy()) * percepts[i]
                 for j in range(0, 9):
                     actions[j] += Distance(j % 3, j / 3, i % 3, (i - 9) / 3) * self.chromosome.friendScore
 
@@ -104,11 +106,11 @@ class MyCreature(Creature):
                 if i == 22:
                     actions[9] += self.chromosome.eatFoodScore * (100 - self.getEnergy()) * percepts[i]
                 for j in range(0, 9):
-                    actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore * percepts[i]
                     if Distance(j % 3, j / 3, i % 3, (i - 18) / 3) == 0:
                         actions[j] += self.chromosome.goToFoodScore * (100 - self.getEnergy()) * percepts[i]
+                    else:
+                        actions[j] -= Distance(j % 3, j / 3, i % 3, (i - 18) / 3) * self.chromosome.awayFromFoodScore * percepts[i]
 
-        
         return actions
 
 def checkAndSwapGenerations(newGen, avgFitness, oldPopulation, oldAvgFitness, numGenerationsSinceSwitch):
@@ -121,40 +123,40 @@ def Distance(a1, a2, b1, b2):
 
 def mateTwoParents(a, b):
     c = MyCreature(a.numP, a.numA)
-    mutationChance = 0.001
+    mutationChance = 0#.001
     c.chromosome = a.chromosome
     if random.uniform(0,1) <= 0.5:
         c.chromosome.enemyScore = b.chromosome.enemyScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.enemyScore = random.randint(0, 100)
+        c.chromosome.enemyScore = random.randint(-100, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.eatEnemyScore = b.chromosome.eatEnemyScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.eatEnemyScore = random.randint(0, 100)
+        c.chromosome.eatEnemyScore = random.randint(-100, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.friendScore = b.chromosome.friendScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.friendScore += random.randint(-5, 5)
+        c.chromosome.friendScore += random.randint(-100, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.eatFriendScore = b.chromosome.eatFriendScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.eatFriendScore += random.randint(-5, 5)
+        c.chromosome.eatFriendScore += random.randint(-100, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.goToFoodScore = b.chromosome.goToFoodScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.goToFoodScore = random.randint(0, 100)
+        c.chromosome.goToFoodScore = random.randint(-100, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.awayFromFoodScore = b.chromosome.awayFromFoodScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.awayFromFoodScore = random.randint(0, 100)
+        c.chromosome.awayFromFoodScore = random.randint(-100, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.eatFoodScore = b.chromosome.eatFoodScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.eatFoodScore = random.randint(0, 100)
+        c.chromosome.eatFoodScore = random.randint(-100, 100)
     if random.uniform(0,1) <= 0.5:
         c.chromosome.randomScore = b.chromosome.randomScore
     if random.uniform(0,1) <= mutationChance:
-        c.chromosome.randomScore = random.randint(0, 100)
+        c.chromosome.randomScore = random.randint(-100, 100)
     return c
 
 def rouletteWheelSelection(oldPopulation):
@@ -196,7 +198,7 @@ def tournamentSelection(oldPopulation):
         newPopulation.append(c)
         i+=1
     for i in range(len(newPopulation), len(oldPopulation)):
-        # Randomly choose 75% of the old population
+        # Randomly choose 50% of the old population
         randomPopulation = random.sample(oldPopulation, int(len(oldPopulation) / 2))
         randomPopulation.sort(key=lambda x: x.fitness, reverse=True)
         newPopulation.append(mateTwoParents(randomPopulation[0], randomPopulation[1]))
@@ -296,7 +298,7 @@ w.setNextGeneration(population)
 w.evaluate(numTurns)
 
 # Show visualisation of initial creature behaviour
-# w.show_simulation(titleStr='Initial population', speed='fast')
+w.show_simulation(titleStr='Initial population', speed='fast')
 
 for i in range(numGenerations):
     print("\nGeneration %d:" % (i+1))
@@ -311,8 +313,8 @@ for i in range(numGenerations):
     w.evaluate(numTurns)
 
     # Show visualisation of final generation
-    # if i==numGenerations-1:
-    #     w.show_simulation(titleStr='Final population', speed='fast')
+    if i==numGenerations-1:
+        w.show_simulation(titleStr='Final population', speed='fast')
 
 
 plt.plot(avgFitnessOverTime)
